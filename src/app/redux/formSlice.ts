@@ -53,16 +53,29 @@ export default formSlice.reducer;
 
 
 export const formData = createAsyncThunk(
-    'USER/GETALL',
+    'FORMDATA',
     async () => {
         try {
             const response = await axios.get(
                 'https://ulventech-react-exam.netlify.app/api/form'
             );
-            console.log(response.data.data, 'FOrmmm data');
+            console.log(response, 'FOrmmm data');
             return response.data.data;
         } catch (error: any) {
             console.error(error);
         }
     }
 );
+// export const newFormData=createAsyncThunk(
+//     "NEWFORMDATA",
+//     async()=>{
+//         try{
+//             const response=await axios.post("https://ulventech-react-exam.netlify.app/api/form");
+//             console.log(response,"update data")
+//             // return response.data.data
+//         }catch(error:any){
+//             console.log(error)
+//         }
+//     }
+
+// );
