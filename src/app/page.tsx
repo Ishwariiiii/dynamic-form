@@ -1,125 +1,129 @@
-// "use client"
-// import React, { useEffect } from 'react';
-// import { useSelector, useDispatch } from 'react-redux';
-// import { AppDispatch, RootState } from './redux/store';
-// import { formData } from './redux/formSlice';
-// import { Button, FormControl, FormHelperText,  TextField } from '@mui/material';
-
-// const UserListPage: React.FC = () => {
-//   const dispatch = useDispatch<AppDispatch>();
-
-//   const { fields, loading, isError, isErrorMessage } = useSelector((state: RootState) => state.form);
-
-//   useEffect(() => {
-//     dispatch(formData());
-//   }, [dispatch]);
-
-//   return (
-//     <div className="container">
-//       <h1>User List</h1>
-//       {loading ? (<p>Loading...</p>) : isError ? (<p>{isErrorMessage}</p>) : (<form>
-//         {fields?.map((field, index) => (
-//           <FormControl key={index} fullWidth margin="normal" error={!!field.error}>
-//             <TextField
-//               label={field.fieldName}
-//               type={field.type}
-//               value={field.value}
-//             />
-//             {field.error && <FormHelperText>{field.error}</FormHelperText>}
-//           </FormControl>
-//         ))}
-//         <Button type="submit" fullWidth variant="contained">
-//           Submit
-//         </Button>
-//       </form>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default UserListPage;
-
-
-
-
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "./redux/store";
-import { formData } from "./redux/formSlice";
-import { Button, FormControl, FormHelperText, TextField } from "@mui/material";
+import { formData, newFormData, updateFieldValue } from "./redux/formSlice";
+import {Button,FormControl,InputLabel,MenuItem,Select,TextareaAutosize,TextField,Box} from "@mui/material";
 
-const UserListPage: React.FC = () => {
+const FormDataPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { fields, loading, isError, isErrorMessage } = useSelector(
+
+  const { fields, loading, isError, isErrorMessage, responseMessage } = useSelector(
     (state: RootState) => state.form
   );
-
-  // Local state to manage form data
-  const [formValues, setFormValues] = useState({});
-  const [submittedData, setSubmittedData] = useState();
+  // console.log(fields, "all data");
 
   useEffect(() => {
     dispatch(formData());
   }, [dispatch]);
 
-  // Initialize form values based on fetched fields
-  useEffect(() => {
-    if (fields) {
-      const initialValues = fields.reduce((preValue, field) => ({ ...preValue, [field.fieldName]: field.value}),{}
-      );
-      setFormValues(initialValues);
-    }
-  }, [fields]);
-  
-
-  // Handle input change
-  const handleInputChange = (fieldName: string, value: string) => {
-    setFormValues({...formValues,[fieldName]:value})
+  const handleFieldChange = (index: number, value: string | number) => {
+    dispatch(updateFieldValue({ index, value }));
   };
 
-  // Handle form submission
-  const saveFormData = (event: React.FormEvent) => {
-    event.preventDefault();
-    setSubmittedData(formValues); // Set submitted data
+  const handleSubmit = () => {
+    const updatedFields = [...fields];
+    const newData: Record<string, any> = {};
+    updatedFields.forEach((field: any) => {
+      newData[field.fieldName] = field.value;
+    });
+
+    console.log("Submitting payload:", newData)
+
+    dispatch(newFormData(newData));
   };
 
   return (
-    <div className="container">
-      <h1>User List</h1>
+    <Box
+      className="container"
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        flexDirection: 'column',
+      }}
+    >
+
+      <h1>Dynamic Form</h1>
       {loading ? (
-        <p>Loading...</p>
+        <p>Loading....</p>
       ) : isError ? (
-        <p>{isErrorMessage}</p>
+        <p style={{ color: "red" }}>{isErrorMessage}</p>
       ) : (
-        <form onSubmit={saveFormData}>
-          {fields?.map((field, index) => (
-            <FormControl key={index} fullWidth margin="normal" error={!!field.error}>
-              <TextField
-                label={field.fieldName}
-                type={field.type}
-                value={field.value}
-                onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
-              />
-              {field.error && <FormHelperText>{field.error}</FormHelperText>}
-            </FormControl>
-          ))}
-          <Button type="submit" fullWidth variant="contained">
+        <Box
+          className="form-container"
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+            maxWidth: '600px',
+            padding: 2,
+            boxShadow: 3,
+            borderRadius: 2,
+            backgroundColor: 'white',
+          }}
+        >
+          {fields?.map((field: any, index: number) => {
+            return (
+              <div key={index} className="field-container">
+                {field.type === "text" || field.type === "email" || field.type === "number" ? (
+                  <FormControl fullWidth margin="normal">
+                    <TextField
+                      label={field.fieldName}
+                      type={field.type}
+                      value={field.value}
+                      onChange={(e) => handleFieldChange(index, e.target.value)}
+                      required
+                    />
+                  </FormControl>
+                ) : field.type === "select" ? (
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel>{field.fieldName}</InputLabel>
+                    <Select
+                      value={field.value}
+                      label={field.fieldName}
+                      onChange={(e) => handleFieldChange(index, e.target.value)}
+                      required
+                    >
+                      {field.options.map((item: any) => (
+                        <MenuItem value={item} key={item}>
+                          {item}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                ) : field.type === "multiline" ? (
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel>{field.fieldName}</InputLabel>
+                    <TextareaAutosize
+                      minRows={4}
+                      defaultValue={field.value}
+                      onChange={(e) => handleFieldChange(index, e.target.value)}
+                      style={{ width: "100%", border: "1px solid gray" }}
+                    />
+                  </FormControl>
+                ) : null}
+              </div>
+            );
+          })}
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            sx={{ marginTop: "20px" }}
+          >
             Submit
           </Button>
-          {submittedData && (
-            <div className="submitted-data">
-              <h2>Submitted Data</h2>
-              <p>{JSON.stringify(submittedData)}</p>
-            </div>
-          )}
-
-        </form>
+        </Box>
       )}
-    </div>
+      {responseMessage && (
+        <div>
+          <p>{JSON.stringify(responseMessage)}</p>
+        </div>
+      )}
+    </Box>
   );
 };
 
-export default UserListPage;
-
+export default FormDataPage;
