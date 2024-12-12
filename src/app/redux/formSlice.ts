@@ -5,10 +5,10 @@ import axios from "axios";
 interface FormState {
     fields: any;
     loading: boolean;
-    responseMessage: string | null;
+    responseMessage: any;
     isSuccess: boolean;
     isError: boolean;
-    isErrorMessage: any
+    isErrorMessage: any;
     isDataLoading: boolean
 }
 
@@ -18,9 +18,9 @@ const initialState: FormState = {
     responseMessage: null,
     isSuccess: false,
     isError: false,
-    isErrorMessage: null,
+    isErrorMessage: "",
     isDataLoading: false
-};
+}
 
 const formSlice = createSlice({
     name: "form",
@@ -46,8 +46,11 @@ const formSlice = createSlice({
             .addCase(formData.rejected, (state, action) => {
                 state.loading = false;
                 state.isError = true;
-                state.isErrorMessage = action.payload;
+                // state.isErrorMessage=action.payload
+                state.isErrorMessage = action.error.message
+                // console.log(isErrorMessage,"gjhkgjh")
             })
+
 
             .addCase(newFormData.pending, (state) => {
                 state.isDataLoading = true;
@@ -61,7 +64,8 @@ const formSlice = createSlice({
             .addCase(newFormData.rejected, (state, action) => {
                 state.isDataLoading = false;
                 state.isError = true;
-                state.isErrorMessage = action.payload;
+                // state.isErrorMessage=action.payload
+                state.isErrorMessage = action.error.message
             });
     },
 });
@@ -74,7 +78,8 @@ export const formData = createAsyncThunk(
             const response = await axios.get("https://ulventech-react-exam.netlify.app/api/form");
             return response.data.data;
         } catch (error: any) {
-            console.log(error)
+            throw new Error(error.response?.data?.message);   
+      
         }
     });
 
@@ -85,8 +90,7 @@ export const newFormData = createAsyncThunk(
             const response = await axios.post("https://ulventech-react-exam.netlify.app/api/form", newData);
             return response.data;
         } catch (error: any) {
-            console.log("Error submitting form:", error.response?.data);
-            return
+            throw new Error(error.response?.data?.message);
         }
     }
 );
@@ -94,3 +98,9 @@ export const newFormData = createAsyncThunk(
 
 export const { updateFieldValue } = formSlice.actions;
 export default formSlice.reducer;
+
+
+
+
+
+
